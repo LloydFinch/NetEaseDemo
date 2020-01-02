@@ -1,0 +1,93 @@
+@startuml
+autonumber
+
+'Activity启动到ViewRootImpl.performTraversals
+'包括：PhoneWindow的创建，DecorView的创建，contentView的填充，ViewRootImpl的创建
+'入口：ActivityThread的public static void main方法
+
+actor User
+
+User -> ActivityThread: main(String []args)
+ActivityThread -> ActivityThread: attach()
+ActivityThread -> ActivityManagerService: attachApplication()
+ActivityManagerService -> ActivityManagerService: attachApplicationLocked()
+ActivityManagerService -> ActivityStackSupervisor: attachApplicationLocked()
+ActivityStackSupervisor -> ActivityStackSupervisor: realStartActivityLocked()
+ActivityStackSupervisor -> ApplicationThread: scheduleLaunchActivity()
+ApplicationThread -> ActivityThread: sendMessage(H.LAUNCH_ACTIVITY)
+
+'onCreate()的过程
+H -> ActivityThread: handleLaunchActivity()
+ActivityThread -> ActivityThread: performLaunchActivity()
+note right: 1 创建了要要启动的Activity \n2 创建了对应的Application \n3 activity.attach(application) \n4 回调Activity的onCreate()
+ActivityThread -> Activity: attach()
+note right: 创建了一个PhoneWindow
+Activity -> PhoneWindow: setWindowManager()
+ActivityThread -> Instrumentation: callActivityOnCreate()
+Instrumentation -> Activity: performCreate()
+Activity -> Activity: onCreate()
+
+'开始添加contentView
+Activity -> Activity: setContentView(int layoutResID)
+note right: 其实就是调用了PhoneWindow的setContentView()
+Activity -> PhoneWindow: setContentView(layoutResID)
+note right: 顾名不思义，并没有setView到Window上，只是初始化了decorView等一些成员变量
+
+PhoneWindow -> PhoneWindow: installDecor()
+note right: 创建了DecorView，然后为自己的mContentParent赋值
+
+PhoneWindow -> PhoneWindow: generateDecor()
+note right: 创建了一个DecorView，DecorView是一个FrameLayout
+
+PhoneWindow -> PhoneWindow: generateLayout()
+note right: 会创建并返回一个ViewGroup，其实就是contentView，然后赋值给自己的mContentParent
+
+'这几步都是为上面那一步服务的
+PhoneWindow -> DecorView: onResourcesLoaded(LayoutInflater,layoutResource)
+note right: 这个layoutResource里面就有一个id为content的view，使用它填充一个局部变量root，\n其实就是一个View，然后添加到自身，这个id是系统的包含一个id为content的布局，\n不是我们传入的id
+DecorView -> DecorView: addView(root,0,match_parent)
+note right: 将上一步填充的root添加到自身
+PhoneWindow -> PhoneWindow: findViewById(com.android.internal.R.id.content)
+note right: 这里会找出上面添加的root里面的contentView，然后返回
+'结束，此时已经填充并添加了contentView，mContentParent已经有值并且指向contentView
+
+PhoneWindow -> LayoutInflater: inflate(layoutResID,mContentParent)
+note right: 将setContentView传入的layoutID填充到mContentParent中去
+'结束，contentView已经有了，并且已经添加到DecorView中去了
+'现在我们的布局:DecorView(FrameLayout)里面是一个mContentParent(一个ViewGroup，没有具体指向)，mContentParent里面是我们setContentView(view)
+'设置的view，但是此时还没有添加到Window上面，所以不可见
+
+'onResume过程开始，这里面才会把view添加到Window上面并显示
+ActivityThread -> ActivityThread: handleResumeActivity()
+
+ActivityThread -> ActivityThread: performResumeActivity()
+ActivityThread -> Activity: performResume()
+note right: 这里面会调用一下自己的performStart()，最终调用自己的onStart()
+Activity -> Instrumentation: callActivityOnResume()
+Instrumentation -> Activity: onResume()
+note right: 这个时候已经回调了onResume()，但是contentView并没有添加到Window上，也就是说并不可见\n，但是很快就可见了
+'现在，回到handleResumeActivity那里去
+
+
+ActivityThread -> DecorView: setVisibility(View.INVISIBLE)
+note right: 先修改DecorView为不可见，后面测量布局绘制完毕后才设置为可见
+ActivityThread -> WindowManager: addView(decor,layoutparams)
+note right: 开始添加到Window上了，decor就是onCreate阶段创建的DecorView(回顾一下我们的布局)，\n这里其实调用的是WindowManagerGlobal的addView()
+ActivityThread -> WindowManagerGlobal: addView(decor,layoutparams)
+note right: 楼上白痴，实现在这里
+
+WindowManagerGlobal -> ViewRootImpl: setView(view,wparams)
+ViewRootImpl -> ViewRootImpl: requestLayout()
+ViewRootImpl -> ViewRootImpl: scheduleTraversals()
+ViewRootImpl -> ViewRootImpl: doTraversal()
+note right: 经过一系列步骤跑到doTraversal()中来
+
+
+
+
+ActivityThread -> Activity: makeVisible()
+note right: 最终使其对用户可见
+Activity -> DecorView: setVisibility(View.VISIBLE);
+note right: 还是通过修改DecorView实现的
+
+@enduml

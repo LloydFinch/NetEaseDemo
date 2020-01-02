@@ -1,0 +1,215 @@
+@startuml
+
+class Picasso {
+    static volatile Picasso singleton
+    static final Handler HANDLER = new Handler(Looper.getMainLooper())
+
+    private final Listener listener
+    private final RequestTransformer requestTransformer
+    private final CleanupThread cleanupThread
+    private final List<RequestHandler> requestHandlers
+    final Context context;
+    final Dispatcher dispatcher;
+    final Cache cache;
+    final Stats stats;
+    final Map<Object, Action> targetToAction;
+    final Map<ImageView, DeferredRequestCreator> targetToDeferredRequestCreator;
+    final ReferenceQueue<Object> referenceQueue;
+    final Bitmap.Config defaultBitmapConfig;
+
+    public void shutdown()
+    void defer()
+    void enqueueAndSubmit(Action action)
+    void submit(Action action)
+    Bitmap quickMemoryCacheCheck(String key)
+    void complete(BitmapHunter hunter)
+    void resumeAction(Action action)
+}
+
+interface Picasso.Listener {
+    void onImageLoadFailed(Picasso picasso, Uri uri, Exception exception)
+}
+
+class CleanupThread {
+    private final ReferenceQueue<Object> referenceQueue
+    private final Handler handler
+
+    void shutdown()
+}
+Thread <-- CleanupThread
+
+abstract class RequestHandler {
+
+}
+class RequestHandler.Result {
+    private final Picasso.LoadedFrom loadedFrom
+    private final Bitmap bitmap
+    private final Source source
+    private final int exifOrientation
+}
+enum Picasso.LoadedFrom {
+    MEMORY(Color.GREEN),
+    DISK(Color.BLUE),
+    NETWORK(Color.RED);
+}
+interface Source {
+    long read(Buffer sink, long byteCount) throws IOException
+    Timeout timeout()
+}
+Closeable <-- Source
+
+class Picasso.Builder {
+    private final Context context
+    private Downloader downloader
+    private ExecutorService service
+    private Cache cache
+    private RequestTransformer transformer
+}
+
+interface Downloader {
+    //这里面的Request/Response都是okhttp3的
+    Response load(Request request) throws IOException
+    void shutdown()
+}
+class OkHttp3Downloader {
+    //Cache是okhttp3的
+    private final Cache cache
+    final Call.Factory Client //基于okhttp3的
+}
+Downloader <.. OkHttp3Downloader
+
+interface Cache {
+
+}
+class LruCache {
+
+}
+class LruCache.BitmapAndSize {
+    final Bitmap bitmap
+    final int byteCount
+    final android.util.LruCache<String,BitmapAndSize> cache
+}
+Cache <.. LruCache
+
+class PicassoExecutorService {
+    void adjustThreadCount(NetworkInfo info)
+    private void setThreadCount()
+}
+ThreadPoolExecutor <-- PicassoExecutorService
+
+class PicassoFutureTask<BitmapHunter> {
+    private final BitmapHunter hunter
+}
+FutureTask <-- PicassoFutureTask
+Comparable <..PicassoFutureTask
+
+interface RequestTransformer {
+    Request transformRequest(Request request)
+    RequestTransformer IDENTITY
+}
+class Request {
+}
+
+class Request.Builder {
+    private Uri uri
+    private int resourceId
+    private Bitmap.Config config
+    public Builder resize(int targetWidth, int targetHeight)
+    public Builder clearResize()
+}
+
+class Status {
+    final Cache cache
+    final HandlerThread statsThread
+    final Handler handler
+}
+class Status.StatsHandler {
+    private final Stats stats
+}
+Handler <-- StatsHandler
+
+class Dispatcher {
+    final Context context
+    final ExecutorService service
+    final Downloader downloader
+    final Cache cache
+    final Stats stats
+    final Map<String,BitmapHunter> hunterMap
+    final List<BitmapHunter> batch
+    final NetworkBroadcastReceiver receiver
+    final DispatcherThread dispatcherThread
+    boolean airplanMode
+    final Set<Object> pausedTags
+    final Map<Obejct,Action> failedActions
+    final Map<Object,Action> pausedActions
+
+
+    void dispatchSubmit()
+    void performSubmit(Action action)
+    void performSubmit(Action action, boolean dismiss/Failed)
+}
+
+class DispatcherThread {
+
+}
+HandlerThread <-- DispatcherThread
+
+class NetworkBroadcastReceiver {
+    private final Dispatcher dispatcher
+    void register()
+    void unRegister()
+}
+BroadcastReceiver <-- NetworkBroadcastReceiver
+
+class RequestCreator {
+    private final Picasso picasso
+    private final Request.Builder data
+}
+
+class Action<T> {
+    final Picasso picasso
+    final Request request
+    final WeakReference<T> target
+    final int memoryPolicy
+    final int networkPolicy
+    final int errorResId
+    final Drawable drawable
+    final String key
+    final Object tag
+    boolean willReplay
+    boolean cancelled
+}
+
+
+class BitmapHunter {
+
+    void attach(Action action)
+    void detach(Action action)
+
+    Bitmap hunt() throws IOException
+}
+
+Runnable <.. BitmapHunter
+
+
+'得出结论:Picasso的回调是在发起请求的线程中执行的；Picasso缓存的key可以指定，如果没有指定，那么就是url或id；Picasso的请求是通过okhttp进行的;
+'自己写了个LruCache，大小是1/7，这玩意是基于Android自带的LruCache的，由Android自己的LruCache维护(先添加再检查)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@enduml

@@ -1,0 +1,36 @@
+///添加多个自定义属性，可以通过ext代码块
+ext {
+
+    username = "lloyd"
+
+    //生产/开发环境
+    isRelease = true
+
+    //建立map存储
+    androidId = [
+            compileSdkVersion: 28,
+            minSdkVersion    : 16,
+            targetSdkVersion : 28,
+            versionCode      : 1,
+            versionName      : "1.0"
+    ]
+
+    appId = [
+            applicationId: "com.devloper.lloydfinch.neteasedemo"
+    ]
+
+    url = [
+            debug  : "http://www.lloydfinch/debug",
+            release: "http://www.lloydfinch/release"
+    ]
+
+    supportLibrary = "28.0.0"
+
+    /**
+     * 第三方库
+     */
+    dependencies = [
+            rxjava   : 'io.reactivex:rxjava:1.1.6',
+            rxandroid: 'io.reactivex:rxandroid:1.2.1'
+    ]
+}

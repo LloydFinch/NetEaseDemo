@@ -1,0 +1,70 @@
+@startuml
+
+interface Observer<T> {
+    void onCompleted()
+    void onError(Throwable e)
+    void onNext(T t)
+}
+interface Subscription {
+    void unsubscribe()
+    boolean isUnsubscribed()
+}
+
+abstract class Subscriber<T> {
+    public void onStart()
+}
+
+class ActionSubscriber<T> {
+    final Action1<? super T> onNext
+    final Action1<Throwable> onError
+    final Action0 onCompleted
+}
+
+Observer <|-- Subscriber
+Subscription <|.. Subscriber
+Subscriber <|-- ActionSubscriber
+
+interface OnSubscribe<T>{
+}
+
+interface Action1<T> {
+    void call(T t)
+}
+
+interface Action0 {
+    void call()
+}
+
+interface Action {
+}
+
+interface Function {
+}
+
+class OnSubscribeFromArray<T>{
+
+}
+
+Function <|-- Action
+Action <|-- Action1
+Action <|-- Action0
+Action1 <|-- OnSubscribe
+OnSubscribe <|.. OnSubscribeFromArray
+
+class Observable<T> {
+    final OnSubscribe<T> onSubscribe
+    public static <T> Observable<T> create(OnSubscribe<T> f)
+    public final Subscription subscribe(Subscriber<? super T> subscriber)
+}
+
+class Schedulers {
+    public static Scheduler immediate()
+    public static Scheduler newThread()
+    public static Scheduler io()
+    public static Scheduler computation()
+}
+
+abstract class Scheduler {
+}
+
+@enduml

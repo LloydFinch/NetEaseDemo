@@ -1,0 +1,23 @@
+
+@startuml
+autonumber
+
+actor User
+
+User -> OkHttpClient: new OkHttpClient()
+OkHttpClient -> Call: new Call(Request)
+Call -> Call: enqueue(Callback)
+Call -> Dispatcher: enqueue()
+Dispatcher -> Dispatcher: promoteAndExecute()
+Dispatcher -> Call: executeOn(ExecutorService)
+Call -> ExecutorService: execute(Call)
+ExecutorService -> Call: run()
+Call -> Call: execute()
+Call -> Call: getResponseWithInterceptorChain()
+Call -> Chain: proceed(Request)
+Chain -> Interceptor: intercept(Chain)
+Interceptor --> Chain: Response
+Chain --> Call: Response
+Call -> User: Response
+Call -> Dispatcher: finish()
+@enduml

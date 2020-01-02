@@ -1,0 +1,126 @@
+1 String url = "http://www.baidu.com";
+
+
+2 OkHttpClient client = new OkHttpClient();
+    初始化各种属性:
+    网络协议信息，dispatcher，安全信息，连接池，超时时间，连接使用的Socket等，(检测了拦截器的null异常)
+
+3 Request request = new Request.Builder().url(url).get().build();
+     Builder():方法设为"GET"，初始化Headers
+     url():解析协议，存储url
+     get():请求方式设为GET
+     build():返回一个人Request，请求方式为GET，请求头为Headers，url为上面的url
+
+4 Call call = client.newCall(request);
+    //使用第二步的client和第三步的request创建RealCall
+    return RealCall.newRealCall(this, request, false /* for web socket */)
+    使用前面初始化Client的值，来初始化并返回一个RealCall
+    初始化Transmitter
+
+
+5.1 Response response = call.execute();
+    realcall.execute();
+        1 计时
+        2     try {
+                client.dispatcher().executed(this); //添加到队列
+                return getResponseWithInterceptorChain(); //这是一个Response，目的已经达到
+                 // RealInterceptorChain.chain(request); //这里面添加了拦截器
+                 // interceptor.intercept(chain); //返回Response[上面的拦截器]
+              } finally {
+                client.dispatcher().finished(this); //从队列移除
+              }
+
+5.2 Callback callback = new Callback();
+    call.enqueue(callback);
+
+
+
+RealCall
+
+Response getResponseWithInterceptorChain() throws IOException {
+    // Build a full stack of interceptors.
+    List<Interceptor> interceptors = new ArrayList<>();
+    interceptors.addAll(client.interceptors());
+    //重试和重定向
+    interceptors.add(new RetryAndFollowUpInterceptor(client));
+    //处理请求头
+    interceptors.add(new BridgeInterceptor(client.cookieJar()));
+    //Cache
+    interceptors.add(new CacheInterceptor(client.internalCache()));
+    //连接 创建Exchange
+    interceptors.add(new ConnectInterceptor(client));
+    if (!forWebSocket) {
+      interceptors.addAll(client.networkInterceptors());
+    }
+    //最后一个拦截器 CallServerInterceptor(false)
+    interceptors.add(new CallServerInterceptor(forWebSocket));
+
+    //拦截链
+    //拦截器，Transmitter，Request，Call，连接超时、读超时、写超时
+    Interceptor.Chain chain = new RealInterceptorChain(interceptors, transmitter, null, 0,
+        originalRequest, this, client.connectTimeoutMillis(),
+        client.readTimeoutMillis(), client.writeTimeoutMillis());
+
+    boolean calledNoMoreExchanges = false;
+    try {
+      Response response = chain.proceed(originalRequest);
+      if (transmitter.isCanceled()) {
+        closeQuietly(response);
+        throw new IOException("Canceled");
+      }
+      return response;
+    } catch (IOException e) {
+      calledNoMoreExchanges = true;
+      throw transmitter.noMoreExchanges(e);
+    } finally {
+      if (!calledNoMoreExchanges) {
+        transmitter.noMoreExchanges(null);
+      }
+    }
+  }
+
+RealInterceptorChain
+
+  public Response proceed(Request request, Transmitter transmitter, @Nullable Exchange exchange)
+        throws IOException {
+      if (index >= interceptors.size()) throw new AssertionError();
+
+      calls++;
+
+      // If we already have a stream, confirm that the incoming request will use it.
+      if (this.exchange != null && !this.exchange.connection().supportsUrl(request.url())) {
+        throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
+            + " must retain the same host and port");
+      }
+
+      // If we already have a stream, confirm that this is the only call to chain.proceed().
+      if (this.exchange != null && calls > 1) {
+        throw new IllegalStateException("network interceptor " + interceptors.get(index - 1)
+            + " must call proceed() exactly once");
+      }
+
+       //这里循环自增，按照顺序调用拦截器，直到:CallServerInterceptor
+      // Call the next interceptor in the chain.
+      RealInterceptorChain next = new RealInterceptorChain(interceptors, transmitter, exchange,
+          index + 1, request, call, connectTimeout, readTimeout, writeTimeout);
+      Interceptor interceptor = interceptors.get(index);
+      Response response = interceptor.intercept(next);
+
+      // Confirm that the next interceptor made its required call to chain.proceed().
+      if (exchange != null && index + 1 < interceptors.size() && next.calls != 1) {
+        throw new IllegalStateException("network interceptor " + interceptor
+            + " must call proceed() exactly once");
+      }
+
+      // Confirm that the intercepted response isn't null.
+      if (response == null) {
+        throw new NullPointerException("interceptor " + interceptor + " returned null");
+      }
+
+      if (response.body() == null) {
+        throw new IllegalStateException(
+            "interceptor " + interceptor + " returned a response with no body");
+      }
+
+      return response;
+    }

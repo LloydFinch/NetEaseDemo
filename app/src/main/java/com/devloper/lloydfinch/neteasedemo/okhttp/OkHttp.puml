@@ -1,0 +1,151 @@
+
+@startuml
+
+class Request {
+    final HttpUrl url
+    final String method
+    final Headers headers
+    final @Nullable RequestBody body
+    final Map<Class<?>, Object> tags
+
+    HttpUrl url()
+}
+
+class HttpUrl {
+    private final String url
+}
+
+class Headers {
+
+}
+
+class RequestBody {
+
+}
+
+class Response {
+
+}
+
+interface Call {
+    Request request()
+    Response execute() throws IOException
+    void enqueue(Callback responseCallback)
+    void cancel()
+    boolean isExecuted()
+    boolean isCanceled()
+}
+
+interface Call.Factory {
+    Call newCall(Request request)
+}
+
+interface WebSocket {
+
+}
+
+interface WebSocket.Factory {
+    WebSocket newWebSocket(Request request, WebSocketListener listener)
+}
+
+abstract class WebSocketListener {
+    public void onOpen(WebSocket webSocket,Response response)
+    public void onMessage(WebSocket webSocket, String text)
+    public void onMessage(WebSocket webSocket, ByteString bytes)
+    public void onClosing(WebSocket webSocket, int code, String reason)
+    public void onClosed(WebSocket webSocket, int code, String reason)
+    public void onFailure(WebSocket webSocket, Throwable t, @Nullable Response response)
+}
+
+class OkHttpClient {
+     final Dispatcher dispatcher
+     final List<Interceptor> interceptors
+     final List<Interceptor> networkInterceptors
+}
+
+class Dispatcher {
+      private final Deque<AsyncCall> readyAsyncCalls = new ArrayDeque<>()
+      private final Deque<AsyncCall> runningAsyncCalls = new ArrayDeque<>()
+      private final Deque<RealCall> runningSyncCalls = new ArrayDeque<>()
+
+      void enqueue(AsyncCall call)
+      private boolean promoteAndExecute()
+      public synchronized ExecutorService executorService()
+      void finished(AsyncCall call)
+}
+
+class RealCall {
+    final OkHttpClient client
+    private Transmitter transmitter
+    private Request originalRequest
+    final boolean executed
+    static RealCall newRealCall(OkHttpClient client, Request originalRequest, boolean forWebSocket)
+    void reuseCallsPerHostFrom(AsyncCall other)
+    Response getResponseWithInterceptorChain() throws IOException
+}
+
+class RealCall.AsyncCall {
+    private volatile AtomicInteger callsPerHost = new AtomicInteger(0)
+    RealCall get()
+    String host()
+    void executeOn(ExecutorService executorService)
+}
+
+abstract class NamedRunnable {
+    protected abstract void execute()
+}
+
+class Transmitter {
+    private final OkHttpClient client
+    private final Call call
+    public Transmitter(OkHttpClient client, Call call)
+    private final EventListener eventListener
+
+    public void callStart()
+}
+
+interface Interceptor {
+    Response intercept(Chain chain) throws IOException
+}
+
+interface Interceptor.Chain {
+    Request request()
+    Response proceed(Chain chain throws IOException
+
+    @Nullable Connection connection();
+    Call call();
+    int connectTimeoutMillis();
+    Chain withConnectTimeout(int timeout, TimeUnit unit);
+    int readTimeoutMillis();
+    Chain withReadTimeout(int timeout, TimeUnit unit);
+    int writeTimeoutMillis();
+    Chain withWriteTimeout(int timeout, TimeUnit unit);
+}
+
+class RealInterceptorChain {
+    public Response proceed(Request request, Transmitter transmitter, @Nullable Exchange exchange)
+}
+
+class Exchange {
+
+}
+
+class Callback {
+    void onFailure(Call call, IOException e)
+    void onResponse(Call call, Response response) throws IOException
+}
+
+Runnable <.. NamedRunnable
+NamedRunnable <-- AsyncCall
+Call <.. RealCall
+Cloneable <-- Call
+
+Call.Factory <|.. OkHttpClient
+WebSocket.Factory <|.. OkHttpClient
+
+Chain <.. RealInterceptorChain
+
+
+'模版方法的AsyncCall
+'循环检测的RealInterceptorChain
+@enduml
