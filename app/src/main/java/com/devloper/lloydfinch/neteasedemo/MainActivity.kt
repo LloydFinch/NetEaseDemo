@@ -1,29 +1,33 @@
 package com.devloper.lloydfinch.neteasedemo
 
 import android.Manifest
-import android.app.Activity
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.databinding.DataBindingUtil
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AppCompatActivity
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.Menu
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import com.devloper.lloydfinch.neteasedemo.RxJava.RxJavaDemo
+import com.devloper.lloydfinch.neteasedemo.databinding.LayoutDataBindingBinding
 import com.devloper.lloydfinch.neteasedemo.drawable.CircleDrawable
+import com.devloper.lloydfinch.neteasedemo.model.User
 import com.devloper.lloydfinch.neteasedemo.okhttp.OkHttpDemo
+import com.devloper.lloydfinch.neteasedemo.view.ListViewAdapter
 import jp.wasabeef.richeditor.RichEditor
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
 
     private val TAG = "MainActivity"
     private lateinit var tvHello: Button
@@ -43,12 +47,33 @@ class MainActivity : Activity() {
     //当前次数
     private var times: LiveData<Int> = MutableLiveData()
 
+
+    private lateinit var btn1: Button
+    private lateinit var btn2: Button
+
+    private lateinit var listView: ListView
+
+    private val user = User()
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         //此时window.decor==null
         super.onCreate(savedInstanceState)
         Log.e(TAG, "onCreate")
-        setContentView(R.layout.activity_main)
+//        setContentView(R.layout.activity_main)
+
+        /**
+         * 这里测试数据绑定
+         */
+        //创建绑定类，LayoutDataBindingBinding会根据布局名自动生成(编译一下就行)
+        val binding: LayoutDataBindingBinding = DataBindingUtil.setContentView(this, R.layout.layout_data_binding)
+        //绑定数据
+        user.name = "hello"
+        binding.user = user
+
+        //添加点击事件动态刷新变化
+        testDataBinding()
+
 //        tvHello = findViewById(R.id.tv_hello)
 //        tvHello.setOnClickListener {
 //            test()
@@ -91,6 +116,11 @@ class MainActivity : Activity() {
 //        richEditor = findViewById(R.id.richer_editor)
 //
 //        initLiveData()
+
+//        testClipToPadding()
+
+        startActivity(Intent(this, PagingActivity::class.java))
+
     }
 
     var leval = 10
@@ -241,6 +271,72 @@ class MainActivity : Activity() {
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         return true
+    }
+
+    /**
+     * 测试同时按下两个button的反应
+     */
+    private fun testTouchEvent() {
+        btn1 = findViewById(R.id.btn_1)
+        btn1.setOnClickListener {
+            Toast.makeText(this, "button1 ", Toast.LENGTH_SHORT).show()
+        }
+
+        btn2 = findViewById(R.id.btn_2)
+        btn2.setOnClickListener {
+            Toast.makeText(this, "button2 ", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun testClipChildren() {
+//        btn1 = findViewById(R.id.btn_test)
+//        btn1.setOnClickListener {
+//            Toast.makeText(this, "click child", Toast.LENGTH_SHORT).show()
+//        }
+//
+//        findViewById<View>(R.id.ll_test_parent).setOnClickListener {
+//            Toast.makeText(this, "click parent", Toast.LENGTH_SHORT).show()
+//        }
+
+    }
+
+    private fun testClipToPadding() {
+        listView = findViewById(R.id.list_view)
+        listView.adapter = ListViewAdapter()
+    }
+
+    private fun testDataBinding() {
+
+        /**
+         * 测试单向绑定
+         */
+        val tvName: TextView = findViewById(R.id.tv_name)
+        tvName.setOnClickListener {
+            user.name = "name${System.currentTimeMillis()}"
+        }
+
+        /**
+         * 测试双向绑定
+         */
+        val editName: EditText = findViewById(R.id.edit_name)
+        editName.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                /**
+                 * 这里不用set，user的name会自动改变
+                 */
+//                s?.apply {
+//                    user.name = toString()
+//                }
+                Log.d(TAG, "name: ${user.name}")
+            }
+
+        })
     }
 
 }

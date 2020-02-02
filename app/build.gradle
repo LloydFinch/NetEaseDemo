@@ -59,6 +59,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    dataBinding {
+        enabled = true
+    }
 }
 
 dependencies {
@@ -95,4 +99,11 @@ dependencies {
     support.each {
         k, v -> implementation v
     }
+
+
+    /**
+     * android 分页组件paging
+     */
+    implementation 'android.arch.paging:runtime:1.0.1'
+
 }
