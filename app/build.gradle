@@ -106,4 +106,9 @@ dependencies {
      */
     implementation 'android.arch.paging:runtime:1.0.1'
 
+    /**
+     * 内存泄漏检测工具leakcanary，仅限在debug的时候使用
+     */
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+
 }
