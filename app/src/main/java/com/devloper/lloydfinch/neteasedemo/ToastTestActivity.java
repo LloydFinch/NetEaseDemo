@@ -23,6 +23,7 @@ public class ToastTestActivity extends AppCompatActivity {
         // testToast();
         testToastShowTwice();
         // testViewStubSourceCode();
+
     }
 
     /**
