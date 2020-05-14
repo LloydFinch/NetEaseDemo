@@ -1,5 +1,6 @@
 package com.devloper.lloydfinch.neteasedemo;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
@@ -21,9 +22,11 @@ public class ToastTestActivity extends AppCompatActivity {
 
 
         // testToast();
-        testToastShowTwice();
+        //testToastShowTwice();
         // testViewStubSourceCode();
 
+
+        startActivity(new Intent(this, AnimationActivity.class));
     }
 
     /**

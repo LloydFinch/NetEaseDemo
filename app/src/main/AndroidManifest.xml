@@ -14,7 +14,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-<!--        <activity android:name=".ToastTestActivity"></activity>-->
+        <activity android:name=".AnimationActivity"></activity>
+        <!-- <activity android:name=".ToastTestActivity"></activity> -->
         <activity android:name=".PagingActivity" />
         <activity android:name=".Main2Activity" />
         <activity android:name=".pager.PagerFragmentActivity" />

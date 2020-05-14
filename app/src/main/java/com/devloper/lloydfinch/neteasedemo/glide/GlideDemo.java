@@ -4,6 +4,9 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 
+/**
+ * Glide源码分析
+ */
 public class GlideDemo {
 
     public void test(ImageView target) {
