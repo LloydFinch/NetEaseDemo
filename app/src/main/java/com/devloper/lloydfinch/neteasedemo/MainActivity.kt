@@ -3,6 +3,7 @@ package com.devloper.lloydfinch.neteasedemo
 import android.Manifest
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
+import android.arch.lifecycle.Observer
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -26,6 +27,7 @@ import com.devloper.lloydfinch.neteasedemo.model.User
 import com.devloper.lloydfinch.neteasedemo.okhttp.OkHttpDemo
 import com.devloper.lloydfinch.neteasedemo.view.ListViewAdapter
 import jp.wasabeef.richeditor.RichEditor
+import rx.observers.Observers
 
 class MainActivity : AppCompatActivity() {
 
@@ -59,25 +61,25 @@ class MainActivity : AppCompatActivity() {
 
         //此时window.decor==null
         super.onCreate(savedInstanceState)
-        Log.e(TAG, "onCreate")
-//        setContentView(R.layout.activity_main)
+        Log.e(TAG, "onCreate: " + lifecycle.currentState)
+        setContentView(R.layout.activity_main)
 
         /**
          * 这里测试数据绑定
          */
         //创建绑定类，LayoutDataBindingBinding会根据布局名自动生成(编译一下就行)
-        val binding: LayoutDataBindingBinding = DataBindingUtil.setContentView(this, R.layout.layout_data_binding)
-        //绑定数据
-        user.name = "hello"
-        binding.user = user
+//        val binding: LayoutDataBindingBinding = DataBindingUtil.setContentView(this, R.layout.layout_data_binding)
+//        //绑定数据
+//        user.name = "hello"
+//        binding.user = user
 
         //添加点击事件动态刷新变化
-        testDataBinding()
+//        testDataBinding()
 
-//        tvHello = findViewById(R.id.tv_hello)
-//        tvHello.setOnClickListener {
-//            test()
-//        }
+        tvHello = findViewById(R.id.tv_hello)
+        tvHello.setOnClickListener {
+            test()
+        }
 
 //
 //        btnDialog = findViewById(R.id.tv_dialog)
@@ -119,14 +121,13 @@ class MainActivity : AppCompatActivity() {
 
 //        testClipToPadding()
 
-        startActivity(Intent(this, PagingActivity::class.java))
-
+//        startActivity(Intent(this, PagingActivity::class.java))
     }
 
     var leval = 10
     private fun test() {
 //        testRxJava()
-//        testOkHttp()
+        testOkHttp()
 
 //        drawable?.level = (leval--)
 
@@ -134,7 +135,7 @@ class MainActivity : AppCompatActivity() {
 //        testGoogleApi()
 
 
-        startActivity(Intent(this, Main2Activity::class.java))
+//        startActivity(Intent(this, Main2Activity::class.java))
     }
 
     private fun testRxJava() {
@@ -144,7 +145,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun testOkHttp() {
         val okHttpDemo = OkHttpDemo()
-        okHttpDemo.test()
+        okHttpDemo.testFileUpload(this)
     }
 
     private fun showDialog() {
@@ -155,32 +156,36 @@ class MainActivity : AppCompatActivity() {
         startActivity(Intent(this, DialogActivity::class.java))
     }
 
-    override fun onResume() {
-        //此时已经有decor
-        super.onResume()
-        Log.e(TAG, "onResume")
-    }
-
     override fun onStart() {
         //此时还没有decor
         super.onStart()
-        Log.e(TAG, "onStart")
+        Log.e(TAG, "onStart: " + lifecycle.currentState)
         //此时也没有decor
+    }
+
+    override fun onResume() {
+        //此时已经有decor
+        super.onResume()
+        Log.e(TAG, "onResume: " + lifecycle.currentState)
+
+
+        // 这样试试
+        registerOb()
     }
 
     override fun onPause() {
         super.onPause()
-        Log.e(TAG, "onPause")
+        Log.e(TAG, "onPause: " + lifecycle.currentState)
     }
 
     override fun onStop() {
         super.onStop()
-        Log.e(TAG, "onStop")
+        Log.e(TAG, "onStop: " + lifecycle.currentState)
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.e(TAG, "onDestroy")
+        Log.e(TAG, "onDestroy: " + lifecycle.currentState)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
@@ -336,6 +341,14 @@ class MainActivity : AppCompatActivity() {
                 Log.d(TAG, "name: ${user.name}")
             }
 
+        })
+    }
+
+    private val name: MutableLiveData<String> = MutableLiveData()
+    private fun registerOb() {
+        name.value = "android"
+        name.observe(this, Observer<String> {
+            Log.e(TAG, "onChanged: $it")
         })
     }
 

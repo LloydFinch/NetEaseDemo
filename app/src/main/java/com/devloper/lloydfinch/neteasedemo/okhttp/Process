@@ -9,7 +9,7 @@
      Builder():方法设为"GET"，初始化Headers
      url():解析协议，存储url
      get():请求方式设为GET
-     build():返回一个人Request，请求方式为GET，请求头为Headers，url为上面的url
+     build():返回一个Request，请求方式为GET，请求头为Headers，url为上面的url
 
 4 Call call = client.newCall(request);
     //使用第二步的client和第三步的request创建RealCall

@@ -27,7 +27,6 @@ public class OkHttpDemo {
     public void test() {
         testGeneralGet();
 //        testGeneralPost();
-//        testFileUpload(activity);
 //        testInterceptor();
     }
 
@@ -44,6 +43,9 @@ public class OkHttpDemo {
         //初始化
 
         Call call = client.newCall(request);
+
+//        call.execute();
+
         //RealCall, Transmitter
 
 //        call.cancel();
@@ -136,7 +138,7 @@ public class OkHttpDemo {
      * 上传文件
      * 没什么不同的，就是变一下requestBody的事
      */
-    private void testFileUpload(Activity activity) {
+    public void testFileUpload(Activity activity) {
         RxPermissions rxPermissions = new RxPermissions(activity);
         rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE).subscribe(aBoolean -> {
             if (aBoolean) {
@@ -155,7 +157,7 @@ public class OkHttpDemo {
                 }
                 MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
                 RequestBody requestBody = RequestBody.create(mediaType, file);
-                Call call = client.newCall(new Request.Builder().url(url).post(requestBody).build());
+                Call call = client.newCall(new Request.Builder().url(url).put(requestBody).build());
                 call.enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {

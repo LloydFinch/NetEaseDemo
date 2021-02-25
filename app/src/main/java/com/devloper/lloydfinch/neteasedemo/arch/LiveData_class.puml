@@ -1,0 +1,96 @@
+@startuml
+
+abstract class LiveData<T> {
+   - final Object mDataLock
+   - int mActiveCount
+   - int mVersion
+   - volatile Object mData
+   - volatile Object mPendingData
+   + void observe(LifecycleOwner owner, Observer observer)
+   # void setValue(T value)
+   # void postValue(T value)
+   + T getValue()
+   - void dispatchingValue(ObserverWrapper initiator)
+   - void considerNotify(ObserverWrapper observer)
+   # void onActive()
+   # void onInactive()
+}
+
+class MutableLiveData<T> {
+    + void setValue(T value)
+    + void postValue(T value)
+}
+
+LiveData <|-- MutableLiveData
+
+interface Observer<T> {
+    void onChanged(T t)
+}
+
+interface LifecycleOwner {
+    Lifecycle getLifecycle()
+}
+
+abstract class Lifecycle {
+    + abstract void addObserver(LifecycleObserver observer)
+    + abstract void removeObserver(LifecycleObserver observer)
+    + abstract State getCurrentState()
+}
+
+class LifecycleRegistry {
+    + void addObserver(LifecycleObserver observer)
+}
+Lifecycle <|-- LifecycleRegistry
+
+class ObserverWithState {
+    State mState
+    GenericLifecycleObserver mLifecycleObserver
+    void dispatchEvent(LifecycleOwner owner, Event event)
+    - void sync()
+}
+
+interface LifecycleObserver {
+    - final WeakReference<LifecycleOwner> mLifecycleOwner
+}
+
+interface GenericLifecycleObserver {
+    onStateChanged(LifecycleOwner source, Event event)
+}
+
+abstract class ObserverWrapper {
+    # boolean mActive
+    # int mLastVersion
+    # final Observer<T> mObserver
+
+    abstract boolean shouldBeActive()
+
+    void activeStateChanged(boolean newActive)
+}
+
+class LifecycleBoundObserver {
+    boolean shouldBeActive() // >=STARTED才返回true
+}
+
+LifecycleObserver <|-- GenericLifecycleObserver
+ObserverWrapper <|-- LifecycleBoundObserver
+GenericLifecycleObserver <|.. LifecycleBoundObserver
+
+enum State {
+    DESTROYED
+    INITIALIZED
+    CREATED
+    STARTED
+    RESUMED
+}
+
+enum Event {
+    ON_CREATE
+    ON_START
+    ON_RESUME
+    ON_PAUSE
+    ON_STOP
+    ON_DESTROY
+    ON_ANY
+}
+
+@enduml

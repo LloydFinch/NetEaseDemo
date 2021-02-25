@@ -1,0 +1,27 @@
+@startuml
+title : Lifecycle
+
+participant DESTROYED
+participant INITIALIZED
+participant CREATED
+participant STARTED
+participant RESUMED
+
+'class Event {
+'    ON_CREATE
+'    ON_START
+'    ON_RESUME
+'    ON_PAUSE
+'    ON_STOP
+'    ON_DESTROY
+'    ON_ANY
+'}
+
+INITIALIZED -> CREATED: ON_CREATE
+CREATED -> DESTROYED: ON_DESTROY
+CREATED -> STARTED: ON_START
+note right : STARTED之后才接收事件
+STARTED -> RESUMED: ON_RESUME
+RESUMED -> STARTED: ON_PAUSE
+STARTED -> CREATED: ON_STOP
+@enduml

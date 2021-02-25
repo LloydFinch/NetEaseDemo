@@ -1,0 +1,17 @@
+@startuml
+actor User
+
+User -> LiveData: observe(LifecycleOwner, Observer)
+LiveData -> LiveData: addObserver(Observer:ObserverWrapper)
+LiveData -> LifecycleOwner: getLifecycle()
+LiveData -> Lifecycle: addObserver(observer)
+note right: init finish
+
+User -> LiveData: setValue(T)
+LiveData -> LiveData: dispatchingValue(ObserverWrapper)
+LiveData -> LiveData: considerNotify(ObserverWrapper)
+LiveData -> ObserverWrapper: getObserver():Observer
+LiveData -> Observer: onChanged(T)
+note right: notify finish
+
+@enduml
